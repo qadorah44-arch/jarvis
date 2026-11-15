@@ -1,0 +1,50 @@
+name: Build JARVIS APK
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Put files in their Android folders
+        run: |
+          mkdir -p app/src/main/java/com/abdelqader/jarvis app/src/main/assets app/src/main/res/drawable
+          cp MainActivity.java app/src/main/java/com/abdelqader/jarvis/
+          cp AndroidManifest.xml app/src/main/
+          cp index.html app/src/main/assets/
+          cp icon.xml app/src/main/res/drawable/ic_launcher.xml
+          cp app.gradle app/build.gradle
+
+      - name: Build APK
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk JARVIS.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JARVIS-APK
+          path: JARVIS.apk
+
+      - name: Publish to Releases (easy download from phone)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: JARVIS build ${{ github.run_number }}
+          files: JARVIS.apk
