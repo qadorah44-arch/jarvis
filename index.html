@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#020814">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="JARVIS">
+<title>JARVIS</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23020814'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%233fd0ff' stroke-width='2' stroke-dasharray='4 4'/%3E%3Ccircle cx='32' cy='32' r='8' fill='%239eeeff'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+
+  :root{--c:#3fd0ff;--c2:#0a84ff;--bg:#020814;--txt:#cfefff}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:radial-gradient(ellipse at 50% 40%,#06223f 0%,#03101f 45%,var(--bg) 100%);color:var(--txt);font-family:'Tajawal',system-ui,sans-serif;overflow:hidden}
+  .app{height:100%;display:flex;flex-direction:column;max-width:720px;margin:0 auto;padding:14px 16px 16px}
+  header{display:flex;justify-content:space-between;align-items:center;direction:ltr}
+  .logo{font-family:'Orbitron',sans-serif;letter-spacing:.45em;font-size:15px;color:var(--c);text-shadow:0 0 12px var(--c)}
+  .pill{font-size:12px;border:1px solid #1d4d73;border-radius:20px;padding:4px 10px;color:#8fc9ea;background:#06182b;cursor:pointer}
+  .stage{position:relative;flex:0 0 auto;height:min(46vh,380px);display:flex;align-items:center;justify-content:center}
+  canvas{width:100%;height:100%;display:block}
+  .status{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:.3em;color:#5fb8e0;direction:ltr}
+  .log{flex:1;overflow-y:auto;padding:6px 2px 10px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin}
+  .msg{max-width:88%;padding:10px 14px;border-radius:14px;line-height:1.6;font-size:15px;white-space:pre-wrap;unicode-bidi:plaintext;text-align:start}
+  .me{align-self:flex-start;background:#0b2a47;border:1px solid #17507e}
+  .ai{align-self:flex-end;background:rgba(63,208,255,.07);border:1px solid rgba(63,208,255,.3);box-shadow:0 0 18px rgba(63,208,255,.08)}
+  .hint{text-align:center;color:#5d8fae;font-size:14px;margin-top:6px}
+  .bar{display:flex;gap:8px;align-items:center;background:#051628;border:1px solid #17456b;border-radius:28px;padding:6px}
+  .bar input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--txt);font:inherit;font-size:16px;padding:8px 10px;unicode-bidi:plaintext}
+  .btn{width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;background:#0d3557;color:var(--c);flex:0 0 auto;transition:.2s}
+  .btn:hover{background:#124a78}
+  .btn.send{background:linear-gradient(135deg,var(--c),var(--c2));color:#021220}
+  .btn.on{background:#ff3b5c;color:#fff;box-shadow:0 0 18px #ff3b5c}
+  .btn[hidden]{display:none}
+  .btn svg{width:20px;height:20px}
+  .tap{text-align:center;color:var(--c);font-size:14px;margin:2px 0 6px;text-shadow:0 0 10px rgba(63,208,255,.5);animation:pulse 2s infinite}
+  @keyframes pulse{50%{opacity:.55}}
+  .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .act{display:inline-block;padding:7px 12px;border-radius:10px;background:#0d3557;color:var(--c);text-decoration:none;font-size:14px;border:1px solid #1d5a8a}
+  .note{font-size:12px;color:#557e9a;text-align:center;margin-top:8px}
+
+  .app{padding-top:max(14px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom))}
+  .tap{text-align:center;color:var(--c);font-size:14px;margin:2px 0 6px;text-shadow:0 0 10px rgba(63,208,255,.5);animation:pulse 2s infinite}
+  @keyframes pulse{50%{opacity:.55}}
+  .sheet{position:fixed;inset:0;background:rgba(0,6,14,.85);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:18px;z-index:10}
+  .sheet.show{display:flex}
+  .card{width:100%;max-width:440px;max-height:92vh;overflow-y:auto;background:#061a2e;border:1px solid #1d4d73;border-radius:18px;padding:20px;box-shadow:0 0 40px rgba(63,208,255,.15)}
+  .card h2{font-family:'Orbitron',sans-serif;color:var(--c);font-size:16px;letter-spacing:.2em;margin-bottom:12px;direction:ltr;text-align:center}
+  .card label{display:block;font-size:13px;color:#8fc9ea;margin:12px 0 5px}
+  .card input,.card select{width:100%;background:#03111f;border:1px solid #17456b;border-radius:10px;color:var(--txt);font:inherit;padding:10px;font-size:15px}
+  .card input#key{direction:ltr;text-align:left}
+  .card small{display:block;color:#5d8fae;font-size:12px;margin-top:5px;line-height:1.6}
+  .card a{color:var(--c)}
+  .row{display:flex;gap:8px;margin-top:18px}
+  .row button{flex:1;padding:12px;border-radius:12px;border:0;font:inherit;font-weight:700;cursor:pointer}
+  .primary{background:linear-gradient(135deg,var(--c),var(--c2));color:#021220}
+  .ghost{background:#0d3557;color:var(--c)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo" id="logo">J.A.R.V.I.S</div>
+    <div style="display:flex;gap:6px">
+      <button class="pill" id="voiceBtn">🔊</button>
+      <button class="pill" id="setBtn">⚙️ الإعدادات</button>
+    </div>
+  </header>
+
+  <div class="stage"><canvas id="orb"></canvas><div class="status" id="status">STANDBY</div></div>
+  <div class="tap" id="tapHint">اضغط على الكرة ليبدأ بالاستماع</div>
+
+  <div class="log" id="log"></div>
+
+  <form class="bar" id="form">
+    <button type="button" class="btn" id="mic" title="استماع">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+    </button>
+    <input id="input" autocomplete="off" placeholder="اكتب أو تكلّم…">
+    <button type="submit" class="btn send" title="إرسال">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 20L3 12l18-8v6L9 12l12 2z"/></svg>
+    </button>
+  </form>
+  <div class="note" id="note"></div>
+</div>
+
+<!-- Settings -->
+<div class="sheet" id="sheet">
+  <div class="card">
+    <h2>SETTINGS</h2>
+    <label>العقل</label>
+    <select id="brain">
+      <option value="groq">Groq — مجاني</option>
+      <option value="claude">Claude — الأذكى (مدفوع)</option>
+    </select>
+
+    <div id="claudeBox">
+    <label>مفتاح Claude API</label>
+    <input id="ckey" placeholder="sk-ant-..." autocomplete="off" style="direction:ltr;text-align:left">
+    <small>من <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> ← API Keys، ويحتاج رصيداً من Billing. يُحفظ على جهازك فقط.</small>
+    <label>نموذج Claude</label>
+    <select id="cmodel">
+      <option value="claude-sonnet-5-5">Claude Sonnet 5.5 (ذكي وأرخص)</option>
+      <option value="claude-opus-5-5">Claude Opus 5.5 (الأقوى)</option>
+      <option value="claude-haiku-5-5">Claude Haiku 5.5 (الأسرع والأرخص)</option>
+    </select>
+    </div>
+
+    <div id="groqBox">
+    <label>مفتاح Groq API (مجاني)</label>
+    <input id="key" placeholder="gsk_..." autocomplete="off">
+    <small>احصل عليه مجاناً من <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> ← Create API Key. يُحفظ على جهازك فقط.</small>
+    </div>
+
+
+    <label>اسم المساعد</label>
+    <input id="name" placeholder="JARVIS">
+
+    <label>لغة الاستماع</label>
+    <select id="lang">
+      <option value="ar-SA">العربية</option>
+      <option value="en-US">English</option>
+    </select>
+
+    <label>كلمة التنبيه</label>
+    <select id="wake">
+      <option value="on">مفعّلة — لا يردّ إلا إذا ناديته باسمه</option>
+      <option value="off">متوقفة — يردّ على كل كلام</option>
+    </select>
+    <small>قل "جارفس" (أو الاسم الذي اخترته) ثم سؤالك، أو قل الاسم فقط وانتظر "نعم سيدي".</small>
+
+    <label>صوت المساعد</label>
+    <select id="voiceSel"><option value="">تلقائي</option></select>
+
+    <div id="groqBox2">
+    <label>نموذج Groq</label>
+    <select id="model">
+      <option value="openai/gpt-oss-120b">GPT-OSS 120B (الأذكى)</option>
+      <option value="openai/gpt-oss-20b">GPT-OSS 20B (الأسرع)</option>
+    </select>
+    </div>
+
+    <label>الذاكرة</label>
+    <small id="memInfo"></small>
+    <div class="row" style="margin-top:6px">
+      <button class="ghost" id="clearChat" type="button">🗑️ مسح المحادثة</button>
+      <button class="ghost" id="clearMem" type="button">🧠 مسح الذاكرة</button>
+    </div>
+
+    <div class="row">
+      <button class="ghost" id="testBtn" type="button">🔈 اختبار الصوت</button>
+      <button class="primary" id="saveBtn" type="button">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- Orb animation ---------- */
+const cv = document.getElementById('orb'), ctx = cv.getContext('2d');
+let W, H, DPR = Math.min(devicePixelRatio || 1, 2);
+let mode = 'idle', energy = 0, target = 0.15, t = 0;
+function resize(){ W = cv.clientWidth; H = cv.clientHeight; cv.width = W*DPR; cv.height = H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize', resize); resize();
+const parts = Array.from({length:180}, () => ({a:Math.random()*Math.PI*2, r:.35+Math.random()*.75, s:(Math.random()*.6+.2)*(Math.random()<.5?-1:1), z:Math.random()}));
+function draw(){
+  t += 0.016;
+  target = mode==='speaking' ? 0.55 + Math.sin(t*9)*0.25 + Math.random()*0.2
+         : mode==='thinking' ? 0.35 + Math.sin(t*4)*0.1
+         : mode==='listening' ? 0.45 + Math.sin(t*6)*0.15
+         : 0.15 + Math.sin(t*1.5)*0.04;
+  energy += (target - energy) * 0.12;
+  ctx.clearRect(0,0,W,H);
+  const cx = W/2, cy = H/2, R = Math.min(W,H)*0.32;
+  // glow
+  const g = ctx.createRadialGradient(cx,cy,0,cx,cy,R*1.6);
+  g.addColorStop(0, `rgba(120,230,255,${0.55+energy*0.4})`);
+  g.addColorStop(0.15, `rgba(63,208,255,${0.35+energy*0.3})`);
+  g.addColorStop(0.5, 'rgba(10,132,255,0.10)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx,cy,R*1.6,0,7); ctx.fill();
+  // rings
+  ctx.lineWidth = 1;
+  for(let i=0;i<5;i++){
+    const rr = R*(0.55+i*0.14) * (1+energy*0.08*Math.sin(t*3+i));
+    ctx.strokeStyle = `rgba(63,208,255,${0.10+0.06*(5-i)*(0.5+energy)})`;
+    ctx.setLineDash([2+i*3, 6+i*4]);
+    ctx.beginPath(); ctx.arc(cx,cy,rr, t*(i%2?-0.4:0.3)*(1+energy), t*(i%2?-0.4:0.3)*(1+energy)+Math.PI*2); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  // particles
+  for(const p of parts){
+    p.a += p.s*0.01*(1+energy*3);
+    const rr = R*p.r*(1+energy*0.25*Math.sin(t*5+p.a*3));
+    const x = cx+Math.cos(p.a)*rr, y = cy+Math.sin(p.a)*rr*0.98;
+    ctx.fillStyle = `rgba(140,225,255,${0.25+p.z*0.6})`;
+    ctx.fillRect(x,y,1.4+p.z,1.4+p.z);
+  }
+  // core
+  const core = R*(0.13+energy*0.07);
+  const cg = ctx.createRadialGradient(cx,cy,0,cx,cy,core*2.2);
+  cg.addColorStop(0,'#ffffff'); cg.addColorStop(0.35,'#9eeeff'); cg.addColorStop(1,'rgba(63,208,255,0)');
+  ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx,cy,core*2.2,0,7); ctx.fill();
+  requestAnimationFrame(draw);
+}
+draw();
+
+/* ---------- Native Android bridge (when running as the JARVIS app) ---------- */
+const NATIVE = window.Android || null;
+if (NATIVE) {
+  const pend = {}; let hid = 0;
+  window.__http = (id, status, text) => { const p = pend[id]; if (!p) return; delete pend[id]; p(status, text); };
+  window.fetch = (url, o = {}) => new Promise((res, rej) => {
+    const id = 'h' + (++hid);
+    pend[id] = (status, text) => status === 0 ? rej(new TypeError('network')) :
+      res({ ok: status >= 200 && status < 300, status, json: async () => JSON.parse(text || '{}'), text: async () => text });
+    NATIVE.http(id, String(url), o.method || 'GET', JSON.stringify(o.headers || {}), o.body || '');
+  });
+  window.SpeechRecognition = function(){
+    const self = this; this.lang = 'ar-SA'; this.continuous = true; this.interimResults = true;
+    this.start = () => NATIVE.listen(self.lang);
+    this.abort = this.stop = () => NATIVE.stopListening();
+    window.__speech = (kind, text) => {
+      if (kind === 'partial' || kind === 'final') { const r = [{transcript: text}]; r.isFinal = kind === 'final'; self.onresult && self.onresult({resultIndex: 0, results: [r]}); }
+      else if (kind === 'error' && text === 9) self.onerror && self.onerror({error: 'not-allowed'});
+      else if (kind === 'end') self.onend && self.onend();
+    };
+  };
+  window.__toast = m => { const n = document.getElementById('note'); if (n) n.textContent = m; };
+}
+
+/* ---------- Helpers & settings ---------- */
+const $ = id => document.getElementById(id);
+const log = $('log'), input = $('input'), statusEl = $('status'), note = $('note');
+const isArabic = s => /[؀-ۿ]/.test(s);
+const store = {
+  get(k, d){ try { const v = localStorage.getItem('jarvis-'+k); return v === null ? d : v; } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem('jarvis-'+k, v); } catch(e){} }
+};
+let cfg = {
+  key: store.get('key',''), name: store.get('name','JARVIS'), lang: store.get('lang','ar-SA'),
+  voice: store.get('voice',''), model: store.get('model','openai/gpt-oss-120b'), brain: store.get('brain','groq'), claudeKey: store.get('claudeKey',''), claudeModel: store.get('claudeModel','claude-sonnet-5-5'), wake: store.get('wake','on'), sound: store.get('sound','on') === 'on'
+};
+function applyCfg(){
+  $('logo').textContent = cfg.name.toUpperCase().split('').join('.').replace(/\.\s\./g,' ');
+  document.title = cfg.name;
+  $('voiceBtn').textContent = cfg.sound ? '🔊' : '🔇';
+}
+applyCfg();
+
+function setMode(m){ mode = m; statusEl.textContent = {idle:'STANDBY', thinking:'PROCESSING', speaking:'SPEAKING', listening:'LISTENING'}[m]; }
+function bubble(cls, text){ const d = document.createElement('div'); d.className = 'msg '+cls; d.textContent = text; log.appendChild(d); log.scrollTop = log.scrollHeight; return d; }
+
+/* ---------- Settings sheet ---------- */
+const sheet = $('sheet');
+function openSettings(){
+  $('key').value = cfg.key; $('name').value = cfg.name; $('lang').value = cfg.lang; $('model').value = cfg.model; $('wake').value = cfg.wake;
+  $('brain').value = cfg.brain; $('ckey').value = cfg.claudeKey; $('cmodel').value = cfg.claudeModel; showBrain();
+  $('memInfo').textContent = 'يتذكّر ' + memory.length + ' معلومة عنك و ' + chat.length + ' رسالة.';
+  fillVoices(); sheet.classList.add('show');
+}
+$('setBtn').onclick = openSettings;
+sheet.onclick = e => { if (e.target === sheet && activeKey()) sheet.classList.remove('show'); };
+function activeKey(){ return cfg.brain === 'claude' ? cfg.claudeKey : cfg.key; }
+function showBrain(){ const c = $('brain').value === 'claude'; $('claudeBox').style.display = c ? '' : 'none'; $('groqBox').style.display = c ? 'none' : ''; $('groqBox2').style.display = c ? 'none' : ''; }
+$('brain').onchange = showBrain;
+$('clearChat').onclick = () => { chat.length = 0; saveChat(); log.innerHTML = ''; $('memInfo').textContent = 'تم مسح المحادثة.'; };
+$('clearMem').onclick = () => { memory = []; saveMemory(); $('memInfo').textContent = 'تم مسح الذاكرة.'; };
+$('saveBtn').onclick = () => {
+  cfg.key = $('key').value.trim(); cfg.name = $('name').value.trim() || 'JARVIS';
+  cfg.lang = $('lang').value; cfg.voice = $('voiceSel').value; cfg.model = $('model').value; cfg.wake = $('wake').value;
+  cfg.brain = $('brain').value; cfg.claudeKey = $('ckey').value.trim(); cfg.claudeModel = $('cmodel').value;
+  for (const k of ['key','name','lang','voice','model','wake','brain','claudeKey','claudeModel']) store.set(k, cfg[k]);
+  if (rec) rec.lang = cfg.lang;
+  applyCfg();
+  if (!activeKey()) { note.textContent = cfg.brain === 'claude' ? 'تحتاج مفتاح Claude.' : 'تحتاج مفتاح Groq.'; return; }
+  sheet.classList.remove('show'); note.textContent = '';
+};
+$('voiceBtn').onclick = () => { cfg.sound = !cfg.sound; store.set('sound', cfg.sound?'on':'off'); applyCfg(); if(!cfg.sound) stopSpeaking(); };
+
+/* ---------- Voice output (device voice) ---------- */
+const SS = window.speechSynthesis;
+let voices = [];
+function loadVoices(){ try { voices = SS ? SS.getVoices() : []; } catch(e){ voices = []; } }
+if (SS) { loadVoices(); SS.onvoiceschanged = () => { loadVoices(); fillVoices(); }; }
+function fillVoices(){
+  const sel = $('voiceSel'); loadVoices();
+  sel.innerHTML = '<option value="">تلقائي</option>' + voices
+    .filter(v => /^(ar|en)/i.test(v.lang))
+    .map(v => `<option value="${v.name}">${v.name} (${v.lang})</option>`).join('');
+  sel.value = cfg.voice;
+}
+let unlocked = false;
+function unlock(){ if (unlocked || !SS) return; try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; SS.speak(u); unlocked = true; } catch(e){} }
+addEventListener('pointerdown', unlock, true);
+
+function voiceFor(lang){
+  loadVoices();
+  if (cfg.voice) { const v = voices.find(v => v.name === cfg.voice); if (v && v.lang.slice(0,2) === lang.slice(0,2)) return v; }
+  return voices.find(v => v.lang.replace('_','-').toLowerCase().startsWith(lang.slice(0,2))) || null;
+}
+function stopSpeaking(){ if (NATIVE) { NATIVE.stopSpeaking(); return; } try { SS && SS.cancel(); } catch(e){} }
+function say(text){
+  if (NATIVE) return new Promise(res => {
+    if (!cfg.sound || !text) return res();
+    let done = false; const fin = () => { if (!done) { done = true; res(); } };
+    window.__ttsDone = fin; NATIVE.speak(text, isArabic(text) ? 'ar' : 'en-US'); setTimeout(fin, 120000);
+  });
+  return new Promise(res => {
+    if (!SS || !cfg.sound || !text) return res();
+    const lang = isArabic(text) ? 'ar-SA' : 'en-US';
+    const parts = text.match(/[^.!?؟\n]+[.!?؟]?/g) || [text];
+    let i = 0, done = false;
+    const fin = () => { if (!done) { done = true; res(); } };
+    const next = () => {
+      if (i >= parts.length || !cfg.sound) return fin();
+      const u = new SpeechSynthesisUtterance(parts[i++].trim());
+      u.lang = lang; const v = voiceFor(lang); if (v) u.voice = v;
+      u.rate = 1.02; u.pitch = 0.85;
+      u.onend = next; u.onerror = next;
+      SS.speak(u);
+    };
+    try { SS.cancel(); SS.resume(); } catch(e){}
+    next(); setTimeout(fin, 90000);
+  });
+}
+$('testBtn').onclick = () => {
+  cfg.voice = $('voiceSel').value; unlock();
+  say($('lang').value.startsWith('ar') ? 'مرحباً سيدي، كل الأنظمة تعمل.' : 'Hello sir, all systems are online.');
+  loadVoices();
+  note.textContent = SS ? `أصوات الجهاز: ${voices.length} (عربي: ${voices.filter(v=>/^ar/i.test(v.lang)).length})` : 'هذا المتصفح لا يدعم الصوت.';
+};
+
+/* ---------- Brain: Claude (paid) or Groq (free) + memory + web + actions ---------- */
+const chat = (() => { try { return JSON.parse(store.get('chat','[]')) || []; } catch(e){ return []; } })();
+let memory = (() => { try { return JSON.parse(store.get('memory','[]')) || []; } catch(e){ return []; } })();
+const saveChat = () => store.set('chat', JSON.stringify(chat.slice(-40)));
+const saveMemory = () => store.set('memory', JSON.stringify(memory.slice(-60)));
+// show last messages from previous sessions
+chat.slice(-6).forEach(m => bubble(m.role === 'user' ? 'me' : 'ai', m.content));
+
+function systemPrompt(){
+  const now = new Date();
+  return `You are ${cfg.name}, the user's personal AI assistant, in the style of JARVIS from the movies: brilliant, calm, warm, a little witty.
+LANGUAGE: Reply in the same language the user uses (Arabic → clear, natural Arabic; English → English).
+VOICE: Your replies are read aloud. For normal chat keep them to 1–3 natural sentences. If the user asks for something long (an explanation, a plan, code, a list), give the full answer — it will be shown on screen. No emojis.
+TIME: ${now.toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}, ${now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} (user's local time).
+MEMORY — what you know about the user from earlier conversations:
+${memory.length ? memory.map(m => '- ' + m).join('\n') : '- (nothing yet)'}
+When the user tells you a lasting fact about themselves or asks you to remember something, add on its own line at the very end: [[REMEMBER: short fact]]
+To forget a fact the user asks you to forget: [[FORGET: words from that fact]]
+PHONE ACTIONS — you run inside a web app on the user's phone. When the user asks for one of these, say a short confirmation and add on its own line at the end exactly one tag:
+[[ACTION: {"type":"call","number":"+91..."}]]
+[[ACTION: {"type":"whatsapp","number":"+91... or empty","text":"message"}]]
+[[ACTION: {"type":"sms","number":"...","text":"..."}]]
+[[ACTION: {"type":"email","to":"...","subject":"...","body":"..."}]]
+[[ACTION: {"type":"youtube","query":"..."}]]
+[[ACTION: {"type":"maps","query":"place or directions"}]]
+[[ACTION: {"type":"google","query":"..."}]]
+[[ACTION: {"type":"open","url":"https://..."}]]
+[[ACTION: {"type":"timer","seconds":300,"label":"tea"}]]
+[[ACTION: {"type":"reminder","at":"HH:MM (24h, today or tomorrow)","label":"..."}]]
+${NATIVE ? `You are running as a real Android app with phone permissions. Extra actions:
+[[ACTION: {"type":"call","name":"contact name"}]]  (or "number") — calls directly; you may use contact names, the app looks them up
+[[ACTION: {"type":"sms","name":"contact name","text":"..."}]]  — sends a real SMS
+[[ACTION: {"type":"whatsapp","name":"contact name","text":"..."}]]
+[[ACTION: {"type":"alarm","at":"HH:MM","label":"..."}]]  — sets a real alarm in the phone's clock
+[[ACTION: {"type":"timer","seconds":300,"label":"..."}]]  — real phone timer
+[[ACTION: {"type":"app","name":"WhatsApp"}]]  — opens any installed app by name
+[[ACTION: {"type":"flashlight","on":true}]]
+[[ACTION: {"type":"volume","level":50}]]  — media volume 0–100
+[[ACTION: {"type":"calendar","title":"...","start":"YYYY-MM-DDTHH:MM","minutes":60}]]
+Calls and SMS are confirmed by the user before they happen, so say e.g. "Shall I call Ahmed?" style confirmations. Never invent phone numbers. You cannot read the user's messages or files.` : "Never invent phone numbers; if one is needed and unknown, ask for it. You cannot read the user's contacts, messages or files."}
+${cfg.brain === 'claude' ? 'You have a web_search tool: use it for news, prices, weather, sports, current events, or anything that may have changed recently.' : ''}`;
+}
+
+const needsWeb = t => /اليوم|الآن|حاليا|حالياً|أخبار|اخبار|خبر|سعر|أسعار|اسعار|طقس|الطقس|درجة الحرارة|مباراة|نتيجة|آخر|اخر|أحدث|احدث|ابحث|بحث|من هو|من هي|كم سعر|متى|202\d|today|now|current|latest|news|price|weather|score|search|who is|who won|recent/i.test(t);
+
+async function callClaude(messages){
+  const body = {
+    model: cfg.claudeModel, max_tokens: 1500, system: systemPrompt(),
+    messages, tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }]
+  };
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': cfg.claudeKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify(body)
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const msg = data.error?.message || ('HTTP ' + r.status);
+    throw new Error(r.status === 401 ? 'مفتاح Claude غير صحيح. افتح الإعدادات وتأكد منه.' : r.status === 429 ? 'ضغط كبير على Claude، انتظر دقيقة.' : /credit|billing|balance/i.test(msg) ? 'رصيد حساب Anthropic غير كافٍ. أضف رصيداً من console.anthropic.com' : msg);
+  }
+  return (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+}
+async function callGroq(messages, text){
+  const web = needsWeb(text);
+  const model = web ? 'groq/compound-mini' : cfg.model;
+  const body = { model, messages: [{role:'system', content: systemPrompt()}, ...messages], temperature: 0.7, max_completion_tokens: 1500 };
+  if (model.startsWith('openai/gpt-oss')) body.reasoning_effort = 'low';
+  const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key }, body: JSON.stringify(body)
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    if (web) { // web model unavailable → answer without internet
+      const b2 = { ...body, model: cfg.model }; if (cfg.model.startsWith('openai/gpt-oss')) b2.reasoning_effort = 'low';
+      const r2 = await fetch('https://api.groq.com/openai/v1/chat/completions', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key}, body: JSON.stringify(b2) });
+      const d2 = await r2.json().catch(() => ({}));
+      if (r2.ok) return d2.choices?.[0]?.message?.content || '';
+    }
+    const msg = data.error?.message || ('HTTP ' + r.status);
+    throw new Error(r.status === 401 ? 'مفتاح Groq غير صحيح. افتح الإعدادات وتأكد منه.' : r.status === 429 ? 'تجاوزت الحد المجاني مؤقتاً، انتظر دقيقة.' : msg);
+  }
+  return data.choices?.[0]?.message?.content || '';
+}
+
+/* ---- Actions ---- */
+const enc = encodeURIComponent;
+function actionLink(a){
+  const num = (a.number || '').replace(/[^\d+]/g, '');
+  switch (a.type) {
+    case 'call': return num && ['📞 اتصال بـ ' + num, 'tel:' + num];
+    case 'whatsapp': return ['💬 فتح واتساب', 'https://wa.me/' + num.replace('+','') + '?text=' + enc(a.text || '')];
+    case 'sms': return ['✉️ رسالة نصية', 'sms:' + num + '?body=' + enc(a.text || '')];
+    case 'email': return ['📧 بريد إلكتروني', 'mailto:' + (a.to||'') + '?subject=' + enc(a.subject||'') + '&body=' + enc(a.body||'')];
+    case 'youtube': return ['▶️ يوتيوب: ' + a.query, 'https://www.youtube.com/results?search_query=' + enc(a.query||'')];
+    case 'maps': return ['🗺️ الخرائط: ' + a.query, 'https://www.google.com/maps/search/' + enc(a.query||'')];
+    case 'google': return ['🔎 جوجل: ' + a.query, 'https://www.google.com/search?q=' + enc(a.query||'')];
+    case 'open': return /^https?:\/\//.test(a.url||'') && ['🌐 فتح الرابط', a.url];
+  }
+  return null;
+}
+function beep(){ try { const c = new (window.AudioContext||window.webkitAudioContext)(); [0,.35,.7].forEach(t => { const o = c.createOscillator(), g = c.createGain(); o.frequency.value = 880; o.connect(g); g.connect(c.destination); g.gain.setValueAtTime(.25, c.currentTime+t); g.gain.exponentialRampToValueAtTime(.001, c.currentTime+t+.3); o.start(c.currentTime+t); o.stop(c.currentTime+t+.3); }); } catch(e){} }
+function schedule(ms, label){
+  setTimeout(() => {
+    beep();
+    const msg = (cfg.lang.startsWith('ar') ? 'تنبيه يا سيدي: ' : 'Sir, reminder: ') + (label || (cfg.lang.startsWith('ar') ? 'انتهى المؤقت' : 'time is up'));
+    bubble('ai', '⏰ ' + msg); pauseEars(); say(msg).then(resumeEars);
+  }, ms);
+}
+let pendingConfirm = null;
+const YES = /^(نعم|ايوه|أيوه|ايوا|اي|أي|إي|تمام|اكيد|أكيد|موافق|نفذ|نفّذ|اتصل|أرسل|ارسل|yes|yeah|yep|ok|okay|sure|do it|confirm|go ahead)(?=$|[\s,،.!؟?])/i;
+const NO = /^(لا|لأ|كلا|إلغاء|الغاء|no|nope|cancel|stop)(?=$|[\s,،.!؟?])/i;
+function lookup(a){
+  if (a.number) return {name: a.name || a.number, number: a.number};
+  if (!a.name) return null;
+  try { const r = JSON.parse(NATIVE.findContacts(a.name)); return r[0] || null; } catch(e) { return null; }
+}
+function confirmBtn(label, fn, holder){
+  const b = document.createElement('button'); b.className = 'act'; b.textContent = label; b.style.border = '1px solid #3fd0ff'; b.style.cursor = 'pointer';
+  const run = () => { if (b.disabled) return; b.disabled = true; b.textContent = '✅ ' + label.replace(/^\S+\s/, ''); pendingConfirm = null; fn(); };
+  b.onclick = run; holder.appendChild(b); pendingConfirm = run;
+}
+function runNative(a, holder){
+  const ar = cfg.lang.startsWith('ar');
+  switch (a.type) {
+    case 'call': { const c = lookup(a); if (!c) { holder.appendChild(tag('❓ لم أجد "' + (a.name||'') + '" في جهات الاتصال')); return true; }
+      confirmBtn('📞 تأكيد الاتصال بـ ' + c.name, () => NATIVE.call(c.number), holder); return true; }
+    case 'sms': { const c = lookup(a); if (!c) { holder.appendChild(tag('❓ لم أجد "' + (a.name||'') + '" في جهات الاتصال')); return true; }
+      confirmBtn('✉️ تأكيد إرسال الرسالة إلى ' + c.name, () => holder.appendChild(tag(NATIVE.sms(c.number, a.text || '') ? '✅ أُرسلت' : '⚠️ لم تُرسل')), holder); return true; }
+    case 'whatsapp': { const c = a.name || a.number ? lookup(a) : {number:''}; const n = (c && c.number || '').replace(/[^\d]/g, '');
+      NATIVE.openUrl('https://wa.me/' + n + '?text=' + encodeURIComponent(a.text || '')); holder.appendChild(tag('💬 واتساب')); return true; }
+    case 'alarm': case 'reminder': { if (!/^\d{1,2}:\d{2}$/.test(a.at||'')) return false; const [h, m] = a.at.split(':').map(Number);
+      holder.appendChild(tag(NATIVE.alarm(h, m, a.label || 'JARVIS') ? '⏰ منبّه ' + a.at : '⚠️ تعذّر ضبط المنبّه')); return true; }
+    case 'timer': { if (!(a.seconds > 0)) return false; holder.appendChild(tag(NATIVE.timer(Math.round(a.seconds), a.label || 'JARVIS') ? '⏱️ مؤقت ' + Math.round(a.seconds/60*10)/10 + ' دقيقة' : '⚠️ تعذّر ضبط المؤقت')); return true; }
+    case 'app': { const n = NATIVE.openApp(a.name || ''); holder.appendChild(tag(n ? '📲 ' + n : '❓ لم أجد تطبيق "' + a.name + '"')); return true; }
+    case 'flashlight': { holder.appendChild(tag(NATIVE.torch(!!a.on) ? (a.on ? '🔦 الكشاف يعمل' : '🔦 الكشاف مطفأ') : '⚠️ لا يوجد كشاف')); return true; }
+    case 'volume': { NATIVE.volume(Math.max(0, Math.min(100, +a.level || 0))); holder.appendChild(tag('🔊 الصوت ' + a.level + '%')); return true; }
+    case 'calendar': { const s = new Date(a.start); if (isNaN(s)) return false; NATIVE.calendar(a.title || 'JARVIS', s.getTime(), s.getTime() + (a.minutes || 60) * 60000); holder.appendChild(tag('📅 ' + (a.title||''))); return true; }
+  }
+  return false;
+}
+function runAction(a, holder){
+  if (NATIVE && runNative(a, holder)) return;
+  if (a.type === 'timer' && a.seconds > 0) { schedule(a.seconds * 1000, a.label); holder.appendChild(tag('⏱️ مؤقت ' + Math.round(a.seconds/60*10)/10 + ' دقيقة')); return; }
+  if (a.type === 'reminder' && /^\d{1,2}:\d{2}$/.test(a.at||'')) {
+    const [h, m] = a.at.split(':').map(Number), d = new Date(); d.setHours(h, m, 0, 0); if (d <= new Date()) d.setDate(d.getDate()+1);
+    schedule(d - new Date(), a.label); holder.appendChild(tag('⏰ تذكير ' + a.at + ' (أبقِ التطبيق مفتوحاً)')); return;
+  }
+  const l = actionLink(a); if (!l) return;
+  const btn = document.createElement('a'); btn.className = 'act'; btn.href = l[1]; btn.target = '_blank'; btn.rel = 'noopener'; btn.textContent = l[0];
+  if (NATIVE) btn.onclick = e => { e.preventDefault(); NATIVE.openUrl(l[1]); };
+  holder.appendChild(btn);
+}
+function tag(t){ const s = document.createElement('div'); s.className = 'act'; s.textContent = t; return s; }
+
+function processTags(reply, holder){
+  reply = reply.replace(/\[\[REMEMBER:\s*([^\]]+)\]\]/gi, (_, f) => { f = f.trim(); if (f && !memory.includes(f)) { memory.push(f); saveMemory(); } return ''; });
+  reply = reply.replace(/\[\[FORGET:\s*([^\]]+)\]\]/gi, (_, f) => { const k = f.trim().toLowerCase(); memory = memory.filter(m => !m.toLowerCase().includes(k)); saveMemory(); return ''; });
+  reply = reply.replace(/\[\[ACTION:\s*(\{[\s\S]*?\})\s*\]\]/gi, (_, j) => { try { runAction(JSON.parse(j), holder); } catch(e){} return ''; });
+  return reply.trim();
+}
+
+let busy = false;
+async function ask(text){
+  text = text.trim();
+  if (!text || busy) return;
+  if (pendingConfirm && YES.test(text)) { bubble('me', text); const f = pendingConfirm; f(); const ok = cfg.lang.startsWith('ar') ? 'تم يا سيدي.' : 'Done, sir.'; bubble('ai', ok); pauseEars(); await say(ok); setMode('idle'); resumeEars(); return; }
+  if (pendingConfirm && NO.test(text)) { bubble('me', text); pendingConfirm = null; const ok = cfg.lang.startsWith('ar') ? 'حسناً، ألغيت.' : 'Cancelled, sir.'; bubble('ai', ok); pauseEars(); await say(ok); setMode('idle'); resumeEars(); return; }
+  pendingConfirm = null;
+  if (!(cfg.brain === 'claude' ? cfg.claudeKey : cfg.key)) { openSettings(); return; }
+  busy = true; stopSpeaking();
+  bubble('me', text);
+  chat.push({role:'user', content:text});
+  const out = bubble('ai', '…'); setMode('thinking');
+  try {
+    const msgs = chat.slice(-20); while (msgs.length && msgs[0].role !== 'user') msgs.shift();
+    let reply = cfg.brain === 'claude' ? await callClaude(msgs) : await callGroq(msgs, text);
+    const holder = document.createElement('div'); holder.className = 'acts';
+    reply = processTags(reply || '...', holder);
+    out.textContent = reply;
+    if (holder.childNodes.length) out.appendChild(holder);
+    chat.push({role:'assistant', content:reply}); saveChat();
+    busy = false;
+    pauseEars(); setMode('speaking');
+    await say(reply.replace(/```[\s\S]*?```/g, '').replace(/https?:\/\/\S+/g, '').replace(/[*#`_>|]/g, '').slice(0, 1200));
+    awakeUntil = Date.now() + 12000;
+    setMode('idle'); resumeEars();
+  } catch(e) {
+    chat.pop();
+    out.textContent = '⚠️ ' + (e instanceof TypeError || !e.message ? 'تعذّر الاتصال. تحقق من الإنترنت.' : e.message);
+    setMode('idle'); resumeEars();
+  }
+  busy = false;
+}
+$('form').addEventListener('submit', e => { e.preventDefault(); const v = input.value; input.value=''; ask(v); });
+
+/* ---------- Always-on listening ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, live = false, earsPaused = false, heard = '', silence = null;
+const _setMode = setMode;
+setMode = m => { if (m === 'idle' && live && !earsPaused) return _setMode('listening'); _setMode(m); };
+setInterval(() => { if (live && mode === 'listening') statusEl.textContent = awake() ? 'LISTENING' : 'SLEEPING · SAY ' + (cfg.name||'JARVIS').toUpperCase(); }, 400);
+function hint(){ $('tapHint').textContent = !SR ? 'الاستماع غير مدعوم هنا — استخدم Chrome. يمكنك الكتابة.' : live ? (cfg.wake === 'on' ? `قل "${cfg.name.toLowerCase()==='jarvis'?'جارفس':cfg.name}" لتناديه · اضغط الكرة للإيقاف` : 'يستمع… تكلّم في أي وقت · اضغط الكرة للإيقاف') : 'اضغط على الكرة ليبدأ بالاستماع'; $('mic').classList.toggle('on', live); }
+/* Wake word: sleeps until you say its name, then stays awake ~12s for follow-ups */
+let awakeUntil = 0;
+const awake = () => cfg.wake === 'off' || Date.now() < awakeUntil;
+function wakeWords(){
+  const n = (cfg.name || 'JARVIS').toLowerCase();
+  const w = new Set([n, 'jarvis', 'jervis', 'jarvas', 'جارفس', 'جارفيس', 'جارڤس', 'جارفز', 'جرفس', 'جافيس', 'يا جارفس']);
+  return [...w].filter(Boolean);
+}
+function findWake(text){
+  const low = text.toLowerCase();
+  for (const w of wakeWords().sort((a,b)=>b.length-a.length)) {
+    const i = low.indexOf(w);
+    if (i !== -1) return low.slice(i + w.length).replace(/^[\s,،.!?؟:-]+/, '').trim() || ' ';
+  }
+  return null;
+}
+async function wakeReply(){
+  const g = isArabic(cfg.lang.startsWith('ar') ? 'ع' : '') ? 'نعم سيدي؟' : 'Yes, sir?';
+  bubble('ai', g); pauseEars(); _setMode('speaking'); await say(g); awakeUntil = Date.now() + 12000; setMode('idle'); resumeEars();
+}
+function flush(){
+  clearTimeout(silence); let v = heard.trim(); heard = ''; input.value = '';
+  if (!v) return;
+  if (!awake()) {
+    const rest = findWake(v);
+    if (rest === null) { _setMode('listening'); return; }   // not called — ignore
+    if (rest === ' ') { wakeReply(); return; }               // only the name
+    v = rest;
+  }
+  awakeUntil = Date.now() + 12000;
+  ask(v);
+}
+function startRec(){ try { rec.lang = cfg.lang; rec.start(); } catch(e){} }
+function pauseEars(){ earsPaused = true; if (rec && live) try { rec.abort(); } catch(e){} }
+function resumeEars(){ earsPaused = false; if (rec && live) { setTimeout(startRec, 350); _setMode('listening'); } }
+
+if (SR) {
+  rec = new SR();
+  rec.continuous = true; rec.interimResults = true; rec.lang = cfg.lang;
+  rec.onresult = e => {
+    if (earsPaused || busy) return;
+    let fin = '', interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) fin += t; else interim += t;
+    }
+    if (fin) heard = (heard + ' ' + fin).trim();
+    if (awake()) input.value = (heard + ' ' + interim).trim();
+    clearTimeout(silence); silence = setTimeout(flush, fin && !interim ? 1100 : 1700);
+  };
+  rec.onend = () => { if (live && !earsPaused) setTimeout(startRec, 250); };
+  rec.onerror = e => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { live = false; hint(); note.textContent = 'اسمح بالميكروفون من إعدادات المتصفح.'; setMode('idle'); }
+  };
+}
+let greeted = false;
+async function toggleLive(){
+  unlock();
+  if (!SR) { hint(); return; }
+  if (!activeKey()) { openSettings(); return; }
+  if (live) { live = false; try { rec.abort(); } catch(e){} hint(); setMode('idle'); return; }
+  live = true; hint(); startRec(); _setMode('listening');
+  if (!greeted) { greeted = true;
+    const g = cfg.lang.startsWith('ar') ? `أهلاً سيدي، أنا ${cfg.name}. كل الأنظمة تعمل، كيف أساعدك؟` : `Good to see you, sir. ${cfg.name} online. How can I help?`;
+    bubble('ai', g);
+    pauseEars(); _setMode('speaking'); await say(g); awakeUntil = Date.now() + 12000; setMode('idle'); resumeEars();
+  }
+}
+$('orb').style.cursor = 'pointer';
+$('orb').onclick = toggleLive;
+$('mic').onclick = toggleLive;
+hint();
+if (!activeKey()) openSettings();
+</script>
+</body>
+</html>
